@@ -1,0 +1,221 @@
+﻿<Page
+    x:Class="x86Emulator.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:canvas="using:Microsoft.Graphics.Canvas.UI.Xaml"
+    mc:Ignorable="d"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    <Page.Resources>
+        <Style TargetType="Button">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Grid x:Name="RootGrid" Background="{TemplateBinding Background}">
+                            <VisualStateManager.VisualStateGroups>
+                                <VisualStateGroup x:Name="CommonStates">
+                                    <VisualState x:Name="Normal">
+                                        <Storyboard>
+                                            <PointerUpThemeAnimation Storyboard.TargetName="RootGrid" />
+                                        </Storyboard>
+                                    </VisualState>
+                                    <VisualState x:Name="Disabled">
+                                        <Storyboard>
+                                            <ObjectAnimationUsingKeyFrames Storyboard.TargetName="RootGrid"
+                                                   Storyboard.TargetProperty="Background">
+                                                <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource SystemControlBackgroundBaseLowBrush}" />
+                                            </ObjectAnimationUsingKeyFrames>
+                                            <ObjectAnimationUsingKeyFrames Storyboard.TargetName="ContentPresenter"
+                                                   Storyboard.TargetProperty="Foreground">
+                                                <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource SystemControlDisabledBaseMediumLowBrush}" />
+                                            </ObjectAnimationUsingKeyFrames>
+                                            <ObjectAnimationUsingKeyFrames Storyboard.TargetName="ContentPresenter"
+                                                   Storyboard.TargetProperty="BorderBrush">
+                                                <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource SystemControlDisabledTransparentBrush}" />
+                                            </ObjectAnimationUsingKeyFrames>
+                                        </Storyboard>
+                                    </VisualState>
+                                </VisualStateGroup>
+                            </VisualStateManager.VisualStateGroups>
+                            <ContentPresenter x:Name="ContentPresenter"
+                          BorderBrush="{TemplateBinding BorderBrush}"
+                          BorderThickness="{TemplateBinding BorderThickness}"
+                          Content="{TemplateBinding Content}"
+                          ContentTransitions="{TemplateBinding ContentTransitions}"
+                          ContentTemplate="{TemplateBinding ContentTemplate}"
+                          Padding="{TemplateBinding Padding}"
+                          HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                          VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                          AutomationProperties.AccessibilityView="Raw"/>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Page.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition x:Name="PanelRow" Height="*"></RowDefinition>
+            <RowDefinition Height="Auto"></RowDefinition>
+            <RowDefinition Height="Auto"></RowDefinition>
+        </Grid.RowDefinitions>
+
+        <!-- Notification -->
+        <Grid x:Name="emuNotification" Visibility="Collapsed" Grid.RowSpan="2" Grid.ColumnSpan="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Canvas.ZIndex="99">
+            <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Canvas.ZIndex="0" Background="{StaticResource ApplicationPageBackgroundThemeBrush}" Opacity="0.9"></Grid>
+
+            <StackPanel HorizontalAlignment="Stretch" VerticalAlignment="Center">
+                <TextBlock x:Name="notificationTitle" Text="IMPORTANT!" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"></TextBlock>
+                <TextBlock x:Name="notificationText" TextAlignment="Center" Text="Please do the following.." Margin="0,5,0,0" HorizontalAlignment="Center" VerticalAlignment="Center"></TextBlock>
+                <ProgressRing x:Name="notificationProgress" IsActive="False" Width="50" Height="50" Margin="0,10,0,0"></ProgressRing>
+            </StackPanel>
+        </Grid>
+
+        <!-- Ready -->
+        <Grid x:Name="emuMachineReady" Visibility="Collapsed" Grid.RowSpan="2" Grid.ColumnSpan="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Canvas.ZIndex="99">
+            <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Canvas.ZIndex="0" Background="{StaticResource ApplicationPageBackgroundThemeBrush}" Opacity="0.9"></Grid>
+
+            <StackPanel HorizontalAlignment="Stretch" VerticalAlignment="Center">
+                <TextBlock Text="MACHINE READY" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"></TextBlock>
+                <TextBlock  Text="Press `Play` to start.." Margin="0,5,0,0" HorizontalAlignment="Center" VerticalAlignment="Center"></TextBlock>
+                <Viewbox MaxHeight="100" MaxWidth="50" Margin="0,20,0,10" Tapped="Viewbox_Tapped">
+                    <SymbolIcon Symbol="Play" />
+                </Viewbox>
+            </StackPanel>
+        </Grid>
+
+        <!-- Icons -->
+        <StackPanel Orientation="Horizontal" Grid.RowSpan="2" Grid.ColumnSpan="2" Margin="0,0,10,5" Canvas.ZIndex="101" VerticalAlignment="Bottom" HorizontalAlignment="Right">
+            <Image x:Name="ReadWrite_CD" Visibility="Collapsed" Source="Assets/icons/cd.gif" Width="25" Margin="10,0,0,0"></Image>
+            <Image x:Name="ReadWrite_HDD" Visibility="Collapsed" Source="Assets/icons/hdd.gif" Width="18" Margin="10,0,0,0"></Image>
+            <Image x:Name="ReadWrite_Floppy" Visibility="Collapsed" Source="Assets/icons/floppy.gif" Width="23" Margin="10,0,0,0"></Image>
+        </StackPanel>
+        <!-- Settings-->
+        <Grid x:Name="emuSettings" Visibility="Collapsed" Grid.RowSpan="2" Grid.ColumnSpan="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Canvas.ZIndex="100">
+            <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Canvas.ZIndex="0" Background="{StaticResource ApplicationPageBackgroundThemeBrush}" Opacity="0.9"></Grid>
+            <Pivot  Canvas.ZIndex="1">
+                <PivotItem>
+                    <PivotItem.Header>Resources</PivotItem.Header>
+                    <ScrollViewer HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                        <StackPanel x:Name="resourcesContainerBlock" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                            <Border BorderBrush="DodgerBlue" BorderThickness="1"></Border>
+
+                            <!-- Filled by code using 'BuildResources()' -->
+                        </StackPanel>
+                    </ScrollViewer>
+                </PivotItem>
+
+                <PivotItem>
+                    <PivotItem.Header>Settings</PivotItem.Header>
+                    <ScrollViewer HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                        <StackPanel HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                            <Border BorderBrush="DodgerBlue" BorderThickness="1"></Border>
+                            <!-- Memory -->
+                            <StackPanel Orientation="Horizontal"  Margin="0,5,0,0" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                <TextBlock FontWeight="Bold">MEMORY (</TextBlock>
+
+                                <TextBlock Text="{Binding ElementName=MemorySizeValue,Path=Value}" HorizontalAlignment="Center" VerticalAlignment="Center"></TextBlock>
+                                <TextBlock Text="MB" HorizontalAlignment="Center" VerticalAlignment="Center"></TextBlock>
+                                <TextBlock FontWeight="Bold">)</TextBlock>
+                            </StackPanel>
+                            <!-- Memory Size -->
+                            <Slider x:Name="MemorySizeValue"  Value="{x:Bind MachineMemorySize, Mode=OneWay}" Maximum="512" Minimum="8" StepFrequency="8" ValueChanged="MemorySizeValue_ValueChanged"/>
+
+                            <Border BorderBrush="Gray" BorderThickness="1" Margin="0,5,0,0" HorizontalAlignment="Stretch"></Border>
+
+                            <!-- Debug -->
+                            <TextBlock FontWeight="Bold" Margin="0,5,0,0">MONITOR</TextBlock>
+                            <!-- Debug Info -->
+                            <StackPanel Margin="0,10,0,0">
+                                <ToggleSwitch x:Name="FitScreen_State" Header="Fit screen" IsOn="{x:Bind FitScreen, Mode=TwoWay}"></ToggleSwitch>
+                                <ToggleSwitch x:Name="FillColor_State" Header="Fill color" IsOn="{x:Bind FillColor, Mode=TwoWay}" OffContent="Black" OnContent="Blue"></ToggleSwitch>
+                                <ToggleSwitch x:Name="Aspect_State" Header="Aspect ratio" IsOn="{x:Bind AspectRatio, Mode=TwoWay}" OffContent="4:3" OnContent="16:9"></ToggleSwitch>
+                                <ToggleSwitch x:Name="InterpolationLinear_State" Header="Interpolation" IsOn="{x:Bind InterpolationLinear, Mode=TwoWay}" OffContent="NearestNeighbor" OnContent="Linear"></ToggleSwitch>
+                            </StackPanel>
+
+                            <Border BorderBrush="Gray" BorderThickness="1" Margin="0,5,0,0" HorizontalAlignment="Stretch"></Border>
+
+
+                            <!-- Debug -->
+                            <TextBlock FontWeight="Bold" Margin="0,5,0,0">DEBUG</TextBlock>
+                            <!-- Debug Info -->
+                            <StackPanel Margin="0,10,0,0">
+                                <ToggleSwitch x:Name="DebugInfo_State" Header="OnScreen debug" IsOn="{x:Bind DebugInfo, Mode=TwoWay}"></ToggleSwitch>
+                                <ToggleSwitch x:Name="DebugFile_State" Header="Debug file" IsOn="{x:Bind DebugFile, Mode=TwoWay}"></ToggleSwitch>
+                                <ToggleSwitch x:Name="DebugLog_State" Header="Memory debug (Heavy)" IsEnabled="{Binding ElementName=DebugFile_State,Path=IsOn}" IsOn="{x:Bind DebugLog, Mode=TwoWay}"></ToggleSwitch>
+                                <ToggleSwitch x:Name="DumpFrames_State" Header="Dump frames (Heavy)" IsOn="{x:Bind DumpFrames, Mode=TwoWay}"></ToggleSwitch>
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+                </PivotItem>
+
+                <PivotItem>
+                    <PivotItem.Header>About</PivotItem.Header>
+                    <ScrollViewer HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                        <StackPanel HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                            <TextBlock FontWeight="Bold">Description</TextBlock>
+                            <TextBlock>
+                            x86 emulator as UWP application
+                           <LineBreak></LineBreak>Support x64 and ARM machines
+                            </TextBlock>
+                            <TextBlock></TextBlock>
+                            <TextBlock FontWeight="Bold">Developers</TextBlock>
+                            <HyperlinkButton Content="Bashar Astifan" NavigateUri="https://github.com/basharast" Foreground="DodgerBlue"></HyperlinkButton>
+                            <HyperlinkButton Content="Empyreal96" NavigateUri="https://github.com/Empyreal96" Foreground="DodgerBlue"></HyperlinkButton>
+                            <TextBlock></TextBlock>
+                            <TextBlock FontWeight="Bold">Thanks</TextBlock>
+                            <HyperlinkButton Content="W10M Group" NavigateUri="https://t.me/Windows10Phone" Foreground="DodgerBlue"></HyperlinkButton>
+                            <HyperlinkButton Content="VM86CS" NavigateUri="https://github.com/cryogen/VM86CS" Foreground="DodgerBlue"></HyperlinkButton>
+                        </StackPanel>
+                    </ScrollViewer>
+                </PivotItem>
+            </Pivot>
+        </Grid>
+        <canvas:CanvasAnimatedControl Grid.RowSpan="2" x:Name="MonitorCanvas" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" RenderTransformOrigin="0.5,0.5">
+        </canvas:CanvasAnimatedControl>
+        <StackPanel x:Name="debugData" Grid.Row="1" Canvas.ZIndex="1" Margin="5,5,5,5">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock FontWeight="Bold" FontSize="12" Margin="0,0,2,0">CPU:</TextBlock>
+                <TextBlock x:Name="cpuLabel" FontSize="12" TextWrapping="WrapWholeWords">...</TextBlock>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock FontWeight="Bold" FontSize="12" Margin="0,0,2,0">TPS:</TextBlock>
+                <TextBlock x:Name="tpsLabel" FontSize="12" TextWrapping="WrapWholeWords">...</TextBlock>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock FontWeight="Bold" FontSize="12" Margin="0,0,2,0">Registers:</TextBlock>
+                <TextBlock x:Name="Registers" FontSize="12" TextWrapping="WrapWholeWords">...</TextBlock>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock FontWeight="Bold" FontSize="12" Margin="0,0,2,0">Segments:</TextBlock>
+                <TextBlock x:Name="Segments" FontSize="12" TextWrapping="WrapWholeWords">...</TextBlock>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock FontWeight="Bold" FontSize="12" Margin="0,0,2,0">Flags:</TextBlock>
+                <TextBlock x:Name="Flags" FontSize="12" TextWrapping="WrapWholeWords">...</TextBlock>
+            </StackPanel>
+        </StackPanel>
+        <CommandBar x:Name="ActionsBar" Grid.Row="2" AllowFocusOnInteraction="False">
+            <AppBarButton Icon="Play" x:Name="StartMachine" Click="StartMachine_Click" Label="Start"></AppBarButton>
+            <AppBarButton x:Name="Restart" Label="Restart" Visibility="Collapsed" Click="Restart_Click" Icon="Refresh"></AppBarButton>
+            <AppBarButton x:Name="Keyboard" Label="Keyboard" Click="Keyboard_Click" Icon="Keyboard"></AppBarButton>
+            <AppBarButton x:Name="Floppy" Label="Floppy" Icon="Save">
+                <AppBarButton.Flyout>
+                    <MenuFlyout x:Name="FloppyOption">
+                    </MenuFlyout>
+                </AppBarButton.Flyout>
+            </AppBarButton>
+            <AppBarToggleButton x:Name="Settings" Label="Setting" IsChecked="{x:Bind ShowSettings, Mode=TwoWay}" Icon="Setting"></AppBarToggleButton>
+            <CommandBar.SecondaryCommands>
+                <AppBarButton x:Name="Keyboard_F1" Tag="F1" Icon="Keyboard" Label="F1" Click="Keyboard_Key_Click"></AppBarButton>
+                <AppBarButton x:Name="Keyboard_F2" Tag="F2" Icon="Keyboard" Label="F2" Click="Keyboard_Key_Click"></AppBarButton>
+                <AppBarButton x:Name="Keyboard_F3" Tag="F3" Icon="Keyboard" Label="F3" Click="Keyboard_Key_Click"></AppBarButton>
+                <AppBarButton x:Name="Keyboard_F11" Tag="F11" Icon="Keyboard" Label="11" Click="Keyboard_Key_Click"></AppBarButton>
+                <AppBarButton x:Name="Keyboard_F12" Tag="F12" Icon="Keyboard" Label="F12" Click="Keyboard_Key_Click"></AppBarButton>
+                <AppBarSeparator></AppBarSeparator>
+                <AppBarButton x:Name="Keyboard_Esc" Tag="Escape" Icon="Keyboard" Label="Esc" Click="Keyboard_Key_Click"></AppBarButton>
+            </CommandBar.SecondaryCommands>
+        </CommandBar>
+    </Grid>
+</Page>
